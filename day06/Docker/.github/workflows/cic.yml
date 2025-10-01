@@ -1,0 +1,66 @@
+name: CI/CD FastAPI
+
+# Déclencheurs du workflow
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.py"
+      - "requirements.txt"
+      - ".github/workflows/**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:   # déclenchement manuel
+    inputs:
+      message:
+        description: 'Message à afficher'
+        required: true
+        default: 'Hello from manual dispatch'
+      run_extra:
+        description: 'Exécuter étape supplémentaire'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Étape 1 : Checkout du code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Étape 2 : Configuration Python
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      # Étape 3 : Installer les dépendances
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-mock
+
+      # Étape 4 : Lancer les tests
+      - name: Run tests
+        run: |
+          pytest -v ./tests
+
+  manual_dispatch:
+    name: Manual Dispatch Example
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Print input message
+        run: echo "Message: ${{ github.event.inputs.message }}"
+
+      - name: Conditional extra step
+        if: ${{ github.event.inputs.run_extra == 'true' }}
+        run: echo "Extra step executed because run_extra is true"
